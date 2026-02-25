@@ -216,8 +216,7 @@ async function saveStatus() {
       route_no: routeNumber,
       address_index: index,
       delivered: item.delivered,
-      problem: item.problem,
-      updated_at: new Date().toISOString()
+      problem: item.problem
     }));
 
     const { error } = await supabaseClient
@@ -315,7 +314,10 @@ async function sendReport() {
   }
 
   if (reportSaveResult && !reportSaveResult.savedToCloud) {
-    alert("Rapport gemt lokalt pa denne enhed. Den vises ikke i admin foer cloud virker.");
+    const errorText = reportSaveResult.cloudError
+      ? " Cloud-fejl: " + reportSaveResult.cloudError
+      : "";
+    alert("Rapport gemt lokalt pa denne enhed. Den vises ikke i admin foer cloud virker." + errorText);
   } else if (reportSaveResult && reportSaveResult.imageRemoved) {
     alert("Rapport gemt i cloud, men billedet var for stort og blev ikke gemt.");
   }
@@ -369,32 +371,47 @@ async function readReportImageData() {
 }
 
 async function saveReportEntrySafe(report) {
-  if (supabaseClient) {
-    const { error } = await supabaseClient.from("route_reports").insert(report);
-    if (!error) {
-      return {
-        savedToCloud: true,
-        imageRemoved: false
-      };
-    }
+  let cloudErrorMessage = "";
 
-    // Ved store billeder kan cloud insert fejle pga. request-stoerrelse.
+  if (supabaseClient) {
+    const withoutAddressIndex = {
+      route_no: report.route_no,
+      address: report.address,
+      city: report.city,
+      problem_type: report.problem_type,
+      comment: report.comment,
+      image_data: report.image_data,
+      reported_at: report.reported_at
+    };
+    const variants = [];
+    variants.push(report);
     if (report.image_data) {
-      const reportWithoutImage = {
+      variants.push({
         ...report,
         image_data: ""
-      };
-      const retry = await supabaseClient.from("route_reports").insert(reportWithoutImage);
-      if (!retry.error) {
+      });
+    }
+    variants.push(withoutAddressIndex);
+    if (report.image_data) {
+      variants.push({
+        ...withoutAddressIndex,
+        image_data: ""
+      });
+    }
+
+    for (const variant of variants) {
+      const { error } = await supabaseClient.from("route_reports").insert(variant);
+      if (!error) {
         return {
           savedToCloud: true,
-          imageRemoved: true
+          imageRemoved: !variant.image_data && Boolean(report.image_data)
         };
       }
+      cloudErrorMessage = error.message || cloudErrorMessage;
     }
 
     // Fallback hvis cloud-rapportering fejler (fx manglende tabel/policy).
-    console.warn("Cloud report insert failed, using local fallback:", error.message);
+    console.warn("Cloud report insert failed, using local fallback:", cloudErrorMessage);
   }
 
   const reports = JSON.parse(localStorage.getItem(REPORTS_STORAGE_KEY) || "[]");
@@ -411,7 +428,8 @@ async function saveReportEntrySafe(report) {
       localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(reports));
       return {
         savedToCloud: false,
-        imageRemoved: true
+        imageRemoved: true,
+        cloudError: cloudErrorMessage
       };
     }
     throw error;
@@ -419,7 +437,8 @@ async function saveReportEntrySafe(report) {
 
   return {
     savedToCloud: false,
-    imageRemoved: false
+    imageRemoved: false,
+    cloudError: cloudErrorMessage || (supabaseClient ? "Ukendt cloud-fejl" : "Supabase er ikke initialiseret")
   };
 }
 
