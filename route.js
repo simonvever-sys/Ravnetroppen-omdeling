@@ -374,30 +374,52 @@ async function saveReportEntrySafe(report) {
   let cloudErrorMessage = "";
 
   if (supabaseClient) {
-    const withoutAddressIndex = {
-      route_no: report.route_no,
-      address: report.address,
-      city: report.city,
-      problem_type: report.problem_type,
-      comment: report.comment,
-      image_data: report.image_data,
-      reported_at: report.reported_at
-    };
-    const variants = [];
-    variants.push(report);
-    if (report.image_data) {
-      variants.push({
-        ...report,
-        image_data: ""
-      });
-    }
-    variants.push(withoutAddressIndex);
-    if (report.image_data) {
-      variants.push({
-        ...withoutAddressIndex,
-        image_data: ""
-      });
-    }
+    const variants = [
+      {
+        route_no: report.route_no,
+        address_index: report.address_index,
+        address: report.address,
+        city: report.city,
+        problem_type: report.problem_type,
+        comment: report.comment,
+        image_data: report.image_data,
+        reported_at: report.reported_at
+      },
+      {
+        route_no: report.route_no,
+        address_index: report.address_index,
+        address: report.address,
+        city: report.city,
+        problem_type: report.problem_type,
+        comment: report.comment,
+        image_data: "",
+        reported_at: report.reported_at
+      },
+      {
+        route_no: report.route_no,
+        address_index: report.address_index,
+        address: report.address,
+        city: report.city,
+        problem_type: report.problem_type,
+        comment: report.comment
+      },
+      {
+        route_no: report.route_no,
+        address: report.address,
+        city: report.city,
+        problem_type: report.problem_type,
+        comment: report.comment,
+        image_data: "",
+        reported_at: report.reported_at
+      },
+      {
+        route_no: report.route_no,
+        address: report.address,
+        city: report.city,
+        problem_type: report.problem_type,
+        comment: report.comment
+      }
+    ];
 
     for (const variant of variants) {
       const { error } = await supabaseClient.from("route_reports").insert(variant);
