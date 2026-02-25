@@ -564,25 +564,45 @@ async function loadReports() {
   const localReports = JSON.parse(localStorage.getItem(REPORTS_STORAGE_KEY) || "[]");
 
   if (supabaseClient) {
-    let { data, error } = await supabaseClient
-      .from("route_reports")
-      .select("route_no,address,city,problem_type,comment,image_data,reported_at")
-      .order("reported_at", { ascending: false });
-
-    if (error) {
-      const fallback = await supabaseClient
+    const queries = [
+      () => supabaseClient
         .from("route_reports")
-        .select("route_no,address,city,problem_type,comment,reported_at")
-        .order("reported_at", { ascending: false });
+        .select("route_no,address_index,address,city,problem_type,comment,image_data,reported_at,created_at")
+        .order("reported_at", { ascending: false }),
+      () => supabaseClient
+        .from("route_reports")
+        .select("route_no,address_index,address,city,problem_type,comment,reported_at,created_at")
+        .order("reported_at", { ascending: false }),
+      () => supabaseClient
+        .from("route_reports")
+        .select("route_no,address_index,address,city,problem_type,comment,image_data,created_at")
+        .order("created_at", { ascending: false }),
+      () => supabaseClient
+        .from("route_reports")
+        .select("route_no,address_index,address,city,problem_type,comment,created_at")
+        .order("created_at", { ascending: false }),
+      () => supabaseClient
+        .from("route_reports")
+        .select("*")
+    ];
 
-      data = fallback.data;
-      error = fallback.error;
+    let data = null;
+    let error = null;
+    for (const runQuery of queries) {
+      const result = await runQuery();
+      if (!result.error) {
+        data = result.data;
+        error = null;
+        break;
+      }
+      error = result.error;
     }
 
-    if (!error) {
+    if (!error && data) {
       const cloudReports = (data || []).map((report) => ({
         ...report,
-        image_data: report.image_data || ""
+        image_data: report.image_data || "",
+        reported_at: report.reported_at || report.created_at || new Date().toISOString()
       }));
       const merged = [...cloudReports, ...localReports];
       return sortAndDedupeReports(merged);
@@ -621,7 +641,7 @@ function sortAndDedupeReports(reports) {
       report.route_no,
       report.address_index,
       report.problem_type,
-      report.reported_at
+      report.reported_at || report.created_at || ""
     ].join("|");
 
     if (!seen.has(key)) {
@@ -630,5 +650,9 @@ function sortAndDedupeReports(reports) {
     }
   });
 
-  return deduped.sort((a, b) => new Date(b.reported_at) - new Date(a.reported_at));
+  return deduped.sort((a, b) => {
+    const bDate = new Date(b.reported_at || b.created_at || 0).getTime();
+    const aDate = new Date(a.reported_at || a.created_at || 0).getTime();
+    return bDate - aDate;
+  });
 }
