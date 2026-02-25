@@ -5,6 +5,9 @@ const ROUTE_DATA_PREFIX = "route_data_rute_";
 const REPORTS_STORAGE_KEY = "route_reports_local";
 const REPORT_IMAGE_MAX_SIZE_MB = 10;
 const REPORT_IMAGE_MAX_SIZE_BYTES = REPORT_IMAGE_MAX_SIZE_MB * 1024 * 1024;
+const REPORT_IMAGE_MAX_DIMENSION = 1600;
+const REPORT_IMAGE_TARGET_BYTES = 900 * 1024;
+const REPORT_IMAGE_MIN_QUALITY = 0.55;
 
 const params = new URLSearchParams(window.location.search);
 const routeNumber = Number(params.get("rute"));
@@ -362,11 +365,120 @@ async function readReportImageData() {
     throw new Error("Billedet er for stort. Vaelg maks " + REPORT_IMAGE_MAX_SIZE_MB + " MB.");
   }
 
+  if (!file.type.startsWith("image/")) {
+    return readFileAsDataURL(file);
+  }
+
+  // Bevar filtyper hvor canvas-rasterisering kan oedelaegge indhold (fx GIF animation/SVG).
+  if (file.type === "image/gif" || file.type === "image/svg+xml") {
+    return readFileAsDataURL(file);
+  }
+
+  try {
+    return await compressImageForReport(file);
+  } catch (error) {
+    console.warn("Image compression failed, using original image data:", error);
+    return readFileAsDataURL(file);
+  }
+}
+
+async function readFileAsDataURL(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(String(reader.result || ""));
     reader.onerror = () => reject(new Error("Kunne ikke laese billedet."));
     reader.readAsDataURL(file);
+  });
+}
+
+async function compressImageForReport(file) {
+  const image = await loadImageFromFile(file);
+  const size = fitDimensions(image.naturalWidth || image.width, image.naturalHeight || image.height, REPORT_IMAGE_MAX_DIMENSION);
+  let width = size.width;
+  let height = size.height;
+  let quality = 0.9;
+  let blob = null;
+
+  while (true) {
+    blob = await renderToJpegBlob(image, width, height, quality);
+    if (!blob) {
+      throw new Error("Kunne ikke komprimere billedet.");
+    }
+    if (blob.size <= REPORT_IMAGE_TARGET_BYTES) {
+      break;
+    }
+
+    if (quality > REPORT_IMAGE_MIN_QUALITY) {
+      quality = Math.max(REPORT_IMAGE_MIN_QUALITY, quality - 0.1);
+      continue;
+    }
+
+    if (Math.max(width, height) <= 900) {
+      break;
+    }
+
+    width = Math.round(width * 0.85);
+    height = Math.round(height * 0.85);
+  }
+
+  return blobToDataURL(blob);
+}
+
+async function loadImageFromFile(file) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const objectUrl = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+      resolve(img);
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      reject(new Error("Kunne ikke indlaese billedet."));
+    };
+    img.src = objectUrl;
+  });
+}
+
+function fitDimensions(width, height, maxDimension) {
+  if (!width || !height || Math.max(width, height) <= maxDimension) {
+    return { width, height };
+  }
+
+  if (width >= height) {
+    return {
+      width: maxDimension,
+      height: Math.round((height / width) * maxDimension)
+    };
+  }
+
+  return {
+    width: Math.round((width / height) * maxDimension),
+    height: maxDimension
+  };
+}
+
+async function renderToJpegBlob(image, width, height, quality) {
+  const canvas = document.createElement("canvas");
+  canvas.width = Math.max(1, width);
+  canvas.height = Math.max(1, height);
+  const context = canvas.getContext("2d");
+  if (!context) {
+    return null;
+  }
+
+  context.drawImage(image, 0, 0, canvas.width, canvas.height);
+  return new Promise((resolve) => {
+    canvas.toBlob((blob) => resolve(blob), "image/jpeg", quality);
+  });
+}
+
+async function blobToDataURL(blob) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(String(reader.result || ""));
+    reader.onerror = () => reject(new Error("Kunne ikke laese komprimeret billede."));
+    reader.readAsDataURL(blob);
   });
 }
 
