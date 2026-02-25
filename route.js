@@ -224,11 +224,11 @@ async function saveStatus() {
       .from("route_status")
       .upsert(payload, { onConflict: "route_no,address_index" });
 
-    if (error) {
-      throw error;
+    if (!error) {
+      localStorage.setItem(storageKey, JSON.stringify(status));
+      return;
     }
-
-    return;
+    console.warn("Cloud status upsert failed, using local fallback:", error.message);
   }
 
   localStorage.setItem(storageKey, JSON.stringify(status));
@@ -373,8 +373,21 @@ async function saveReportEntrySafe(report) {
   }
 
   const reports = JSON.parse(localStorage.getItem(REPORTS_STORAGE_KEY) || "[]");
-  reports.push(report);
-  localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(reports));
+  try {
+    reports.push(report);
+    localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(reports));
+  } catch (error) {
+    // Store uden billede hvis browserens storage-kvote rammes.
+    if (error && error.name === "QuotaExceededError" && report.image_data) {
+      reports[reports.length - 1] = {
+        ...report,
+        image_data: ""
+      };
+      localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(reports));
+      return;
+    }
+    throw error;
+  }
 }
 
 async function logout() {
