@@ -3,6 +3,8 @@ const SAVED_USER_KEY = "savedUser";
 const REPORT_ENDPOINT = "https://formspree.io/f/xnjbdwyl";
 const ROUTE_DATA_PREFIX = "route_data_rute_";
 const REPORTS_STORAGE_KEY = "route_reports_local";
+const REPORT_IMAGE_MAX_SIZE_MB = 10;
+const REPORT_IMAGE_MAX_SIZE_BYTES = REPORT_IMAGE_MAX_SIZE_MB * 1024 * 1024;
 
 const params = new URLSearchParams(window.location.search);
 const routeNumber = Number(params.get("rute"));
@@ -347,9 +349,8 @@ async function readReportImageData() {
     return "";
   }
 
-  const maxSizeBytes = 2 * 1024 * 1024;
-  if (file.size > maxSizeBytes) {
-    throw new Error("Billedet er for stort. Vaelg maks 2 MB.");
+  if (file.size > REPORT_IMAGE_MAX_SIZE_BYTES) {
+    throw new Error("Billedet er for stort. Vaelg maks " + REPORT_IMAGE_MAX_SIZE_MB + " MB.");
   }
 
   return new Promise((resolve, reject) => {
