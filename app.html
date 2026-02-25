@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Min rute</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar route-topbar">
+    <h2 id="routeTitle">Rute</h2>
+    <button id="logoutBtn" class="secondary-btn" type="button">Log ud</button>
+  </header>
+
+  <main class="route-main">
+    <section class="route-progress" aria-live="polite">
+      <p id="progressText">Afkrydset: 0 / 0</p>
+      <div class="progress-track" aria-hidden="true">
+        <div id="progressFill" class="progress-fill"></div>
+      </div>
+    </section>
+    <ul id="addressList" aria-live="polite"></ul>
+  </main>
+
+  <div id="popup" class="popup hidden" aria-hidden="true">
+    <div class="popup-content" role="dialog" aria-modal="true">
+      <div id="menuView">
+        <button id="mapsBtn" type="button">📍 Vis adresse</button>
+        <button id="reportBtn" type="button">🚨 Rapportér adresse</button>
+        <button id="closePopup" class="secondary-btn" type="button">Luk</button>
+      </div>
+
+      <div id="reportView" class="hidden">
+        <h3>Rapportér problem</h3>
+
+        <label for="problemType">Problemtype</label>
+        <select id="problemType">
+          <option value="Ingen postkasse">Ingen postkasse</option>
+          <option value="Forkert adresse">Forkert adresse</option>
+          <option value="Adgang blokeret">Adgang blokeret</option>
+          <option value="Andet">Andet</option>
+        </select>
+
+        <label for="comment">Kommentar (valgfri)</label>
+        <input type="text" id="comment" placeholder="Skriv kort...">
+
+        <label for="reportImage">Billede (valgfri)</label>
+        <input type="file" id="reportImage" accept="image/*">
+
+        <button id="sendReport" type="button">Send rapport</button>
+        <button id="backBtn" class="secondary-btn" type="button">Tilbage</button>
+      </div>
+    </div>
+  </div>
+
+  <button class="theme-toggle" type="button" aria-label="Skift tema"></button>
+  <script src="theme.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
+  <script src="route.js"></script>
+</body>
+</html>

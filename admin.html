@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="topbar admin-topbar">
+    <h2>Admin</h2>
+    <button id="logoutBtn" class="secondary-btn" type="button">Log ud</button>
+  </header>
+
+  <main class="admin-main">
+    <details class="admin-card admin-collapsible" open>
+      <summary>System og ruter</summary>
+      <div class="admin-content">
+        <h3>Nulstil system</h3>
+        <button id="resetAllBtn" class="danger" type="button">Nulstil ALT</button>
+
+        <hr>
+
+        <h3>Nulstil en rute</h3>
+        <label for="routeSelect">Vaelg rute</label>
+        <select id="routeSelect"></select>
+        <button id="resetRouteBtn" type="button">Nulstil valgt rute</button>
+
+        <hr>
+
+        <h3>Upload nye ruter</h3>
+        <p class="note">Upload JSON/Excel/CSV. Filnavn kan vaere fx <strong>rute1.json</strong> eller <strong>rute1.xlsx</strong>, eller du kan have en kolonne <strong>rute</strong>/<strong>route</strong> i arket.</p>
+        <label for="uploadRouteSelect">Upload til rute</label>
+        <select id="uploadRouteSelect">
+          <option value="">Automatisk (filnavn/kolonne)</option>
+        </select>
+        <input id="routeUpload" type="file" accept=".json,.xlsx,.xls,.csv,application/json,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" multiple>
+        <button id="uploadRoutesBtn" type="button">Upload ruter</button>
+        <button id="clearUploadedBtn" class="secondary-btn" type="button">Slet uploadede ruter</button>
+        <p id="uploadMsg" class="info"></p>
+      </div>
+    </details>
+
+    <details class="admin-card admin-collapsible">
+      <summary>Rute-status</summary>
+      <div class="admin-content">
+        <div class="admin-row">
+          <h3>Rute-status</h3>
+          <button id="refreshStatsBtn" class="secondary-btn" type="button">Opdater</button>
+        </div>
+        <div class="table-wrap">
+          <table class="stats-table">
+            <thead>
+              <tr>
+                <th>Rute</th>
+                <th>Afleveret</th>
+                <th>Problem</th>
+                <th>Total</th>
+                <th>Procent</th>
+              </tr>
+            </thead>
+            <tbody id="statsBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </details>
+
+    <details class="admin-card admin-collapsible">
+      <summary>Indrapporteringer</summary>
+      <div class="admin-content">
+        <div class="admin-row">
+          <h3>Indrapporteringer</h3>
+          <button id="refreshReportsBtn" class="secondary-btn" type="button">Opdater</button>
+        </div>
+        <ul id="reportsList" class="reports-list"></ul>
+      </div>
+    </details>
+  </main>
+
+  <button class="theme-toggle" type="button" aria-label="Skift tema"></button>
+  <script src="theme.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="supabaseClient.js"></script>
+  <script src="admin.js"></script>
+</body>
+</html>

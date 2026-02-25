@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ravnetroppen Omdeler</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container login-card">
+    <h1>Ravnetroppen</h1>
+    <p class="subtitle">Log ind for at se din rute</p>
+
+    <form id="loginForm" novalidate>
+      <label for="username">Brugernavn</label>
+      <input type="text" id="username" autocomplete="username" required>
+
+      <label for="password">Adgangskode</label>
+      <input type="password" id="password" autocomplete="current-password" required>
+
+      <label class="remember-row" for="rememberMe">
+        <input type="checkbox" id="rememberMe">
+        <span>Husk mig</span>
+      </label>
+
+      <button type="submit">Log ind</button>
+      <p id="errorMsg" class="error"></p>
+    </form>
+  </div>
+
+  <button class="theme-toggle" type="button" aria-label="Skift tema"></button>
+  <script src="theme.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="supabaseClient.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
