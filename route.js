@@ -282,6 +282,7 @@ async function sendReport() {
   const problemType = problemTypeInput.value;
   const comment = commentInput.value.trim();
   let imageData = "";
+  let reportSaveResult = null;
 
   try {
     imageData = await readReportImageData();
@@ -295,7 +296,7 @@ async function sendReport() {
 
   try {
     await saveStatus();
-    await saveReportEntrySafe({
+    reportSaveResult = await saveReportEntrySafe({
       route_no: routeNumber,
       address_index: selectedAddressIndex,
       address: item.address,
@@ -311,6 +312,12 @@ async function sendReport() {
     console.error(error);
     alert("Kunne ikke gemme problemstatus.");
     return;
+  }
+
+  if (reportSaveResult && !reportSaveResult.savedToCloud) {
+    alert("Rapport gemt lokalt pa denne enhed. Den vises ikke i admin foer cloud virker.");
+  } else if (reportSaveResult && reportSaveResult.imageRemoved) {
+    alert("Rapport gemt i cloud, men billedet var for stort og blev ikke gemt.");
   }
 
   try {
@@ -365,7 +372,25 @@ async function saveReportEntrySafe(report) {
   if (supabaseClient) {
     const { error } = await supabaseClient.from("route_reports").insert(report);
     if (!error) {
-      return;
+      return {
+        savedToCloud: true,
+        imageRemoved: false
+      };
+    }
+
+    // Ved store billeder kan cloud insert fejle pga. request-stoerrelse.
+    if (report.image_data) {
+      const reportWithoutImage = {
+        ...report,
+        image_data: ""
+      };
+      const retry = await supabaseClient.from("route_reports").insert(reportWithoutImage);
+      if (!retry.error) {
+        return {
+          savedToCloud: true,
+          imageRemoved: true
+        };
+      }
     }
 
     // Fallback hvis cloud-rapportering fejler (fx manglende tabel/policy).
@@ -384,10 +409,18 @@ async function saveReportEntrySafe(report) {
         image_data: ""
       };
       localStorage.setItem(REPORTS_STORAGE_KEY, JSON.stringify(reports));
-      return;
+      return {
+        savedToCloud: false,
+        imageRemoved: true
+      };
     }
     throw error;
   }
+
+  return {
+    savedToCloud: false,
+    imageRemoved: false
+  };
 }
 
 async function logout() {
