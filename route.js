@@ -24,7 +24,7 @@ const problemTypeInput = document.getElementById("problemType");
 const commentInput = document.getElementById("comment");
 const reportImageInput = document.getElementById("reportImage");
 const reportCameraInput = document.getElementById("reportCamera");
-const takePhotoBtn = document.getElementById("takePhotoBtn");
+const reportImageStatus = document.getElementById("reportImageStatus");
 
 const storageKey = "status_rute_" + routeNumber;
 const supabaseClient = window.supabaseClient;
@@ -49,8 +49,17 @@ async function initializePage() {
   document.getElementById("reportBtn").addEventListener("click", showReportForm);
   document.getElementById("backBtn").addEventListener("click", showMenu);
   document.getElementById("sendReport").addEventListener("click", sendReport);
-  takePhotoBtn.addEventListener("click", () => {
-    reportCameraInput.click();
+  reportCameraInput.addEventListener("change", () => {
+    if (reportCameraInput.files && reportCameraInput.files[0]) {
+      reportImageInput.value = "";
+    }
+    updateReportImageStatus();
+  });
+  reportImageInput.addEventListener("change", () => {
+    if (reportImageInput.files && reportImageInput.files[0]) {
+      reportCameraInput.value = "";
+    }
+    updateReportImageStatus();
   });
 
   loadRoute();
@@ -254,6 +263,7 @@ function closePopup() {
   problemTypeInput.selectedIndex = 0;
   reportImageInput.value = "";
   reportCameraInput.value = "";
+  updateReportImageStatus();
 }
 
 function showMenu() {
@@ -264,6 +274,23 @@ function showMenu() {
 function showReportForm() {
   menuView.classList.add("hidden");
   reportView.classList.remove("hidden");
+  updateReportImageStatus();
+}
+
+function updateReportImageStatus() {
+  const file =
+    (reportCameraInput.files && reportCameraInput.files[0]) ||
+    (reportImageInput.files && reportImageInput.files[0]);
+
+  if (!file) {
+    reportImageStatus.textContent = "";
+    return;
+  }
+
+  const source = reportCameraInput.files && reportCameraInput.files[0]
+    ? "kamera"
+    : "galleri";
+  reportImageStatus.textContent = "Billede valgt fra " + source + ": " + file.name;
 }
 
 function openMaps() {
