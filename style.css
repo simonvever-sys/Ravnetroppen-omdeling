@@ -45,9 +45,9 @@ body {
 }
 
 .login-card {
-  background: rgba(255, 255, 255, 0.74);
-  backdrop-filter: blur(3px);
-  -webkit-backdrop-filter: blur(3px);
+  background: rgba(255, 255, 255, 0.66);
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
   border: 1px solid var(--line);
   border-radius: 16px;
   box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
@@ -58,22 +58,22 @@ body {
   position: fixed;
   inset: 0;
   background:
-    radial-gradient(circle at center, rgba(255, 255, 255, 0.35), rgba(255, 255, 255, 0) 60%),
-    url("Logo.jpg") center/min(82vw, 640px) no-repeat;
-  opacity: 0.34;
+    radial-gradient(circle at center, rgba(255, 255, 255, 0.42), rgba(255, 255, 255, 0) 62%),
+    url("Logo.jpg") center/min(86vw, 700px) no-repeat;
+  opacity: 0.44;
   pointer-events: none;
   z-index: 0;
 }
 
 body.dark-mode .login-card {
-  background: rgba(26, 31, 38, 0.78);
+  background: rgba(26, 31, 38, 0.68);
 }
 
 body.dark-mode.login-page::before {
   background:
-    radial-gradient(circle at center, rgba(45, 108, 223, 0.2), rgba(45, 108, 223, 0) 60%),
-    url("Logo.jpg") center/min(82vw, 640px) no-repeat;
-  opacity: 0.32;
+    radial-gradient(circle at center, rgba(45, 108, 223, 0.3), rgba(45, 108, 223, 0) 62%),
+    url("Logo.jpg") center/min(86vw, 700px) no-repeat;
+  opacity: 0.42;
 }
 
 h1,
