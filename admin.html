@@ -13,7 +13,7 @@
   </header>
 
   <main class="admin-main">
-    <details class="admin-card admin-collapsible" open>
+    <details class="admin-card admin-collapsible">
       <summary>System og ruter</summary>
       <div class="admin-content">
         <h3>Nulstil system</h3>
@@ -65,7 +65,7 @@
       </div>
     </details>
 
-    <details class="admin-card admin-collapsible">
+    <details class="admin-card admin-collapsible" open>
       <summary>Indrapporteringer</summary>
       <div class="admin-content">
         <div class="admin-row">
@@ -76,6 +76,21 @@
       </div>
     </details>
   </main>
+
+  <div id="reportDetailModal" class="popup hidden" aria-hidden="true">
+    <div class="popup-content report-detail-content" role="dialog" aria-modal="true">
+      <h3>Indrapportering</h3>
+      <div class="report-detail-lines">
+        <p id="reportDetailRoute" class="report-detail-line"></p>
+        <p id="reportDetailAddress" class="report-detail-line"></p>
+        <p id="reportDetailProblem" class="report-detail-line"></p>
+        <p id="reportDetailTime" class="report-detail-line"></p>
+        <p id="reportDetailComment" class="report-detail-line"></p>
+      </div>
+      <img id="reportDetailImage" class="report-detail-image hidden" alt="Rapportbillede">
+      <button id="closeReportDetailBtn" class="secondary-btn" type="button">Tilbage</button>
+    </div>
+  </div>
 
   <button class="theme-toggle" type="button" aria-label="Skift tema"></button>
   <script src="theme.js?v=20260225"></script>

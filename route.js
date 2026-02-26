@@ -20,6 +20,7 @@ const progressFill = document.getElementById("progressFill");
 const popup = document.getElementById("popup");
 const menuView = document.getElementById("menuView");
 const reportView = document.getElementById("reportView");
+const popupAddressSummary = document.getElementById("popupAddressSummary");
 const problemTypeInput = document.getElementById("problemType");
 const commentInput = document.getElementById("comment");
 const reportImageInput = document.getElementById("reportImage");
@@ -254,12 +255,19 @@ async function saveStatus() {
 
 function openPopup() {
   showMenu();
+  const item = addresses[selectedAddressIndex] || null;
+  popupAddressSummary.textContent = item
+    ? "Rute " + routeNumber + " | " + item.address + ", " + item.city
+    : "";
+  popup.classList.add("menu-mode");
   popup.classList.remove("hidden");
   popup.setAttribute("aria-hidden", "false");
 }
 
 function closePopup() {
   popup.classList.add("hidden");
+  popup.classList.remove("menu-mode");
+  popup.classList.remove("report-mode");
   popup.setAttribute("aria-hidden", "true");
   commentInput.value = "";
   problemTypeInput.selectedIndex = 0;
@@ -271,11 +279,15 @@ function closePopup() {
 function showMenu() {
   reportView.classList.add("hidden");
   menuView.classList.remove("hidden");
+  popup.classList.add("menu-mode");
+  popup.classList.remove("report-mode");
 }
 
 function showReportForm() {
   menuView.classList.add("hidden");
   reportView.classList.remove("hidden");
+  popup.classList.remove("menu-mode");
+  popup.classList.add("report-mode");
   updateReportImageStatus();
 }
 

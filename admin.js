@@ -18,6 +18,14 @@ const clearUploadedBtn = document.getElementById("clearUploadedBtn");
 const uploadMsg = document.getElementById("uploadMsg");
 const refreshReportsBtn = document.getElementById("refreshReportsBtn");
 const reportsList = document.getElementById("reportsList");
+const reportDetailModal = document.getElementById("reportDetailModal");
+const closeReportDetailBtn = document.getElementById("closeReportDetailBtn");
+const reportDetailRoute = document.getElementById("reportDetailRoute");
+const reportDetailAddress = document.getElementById("reportDetailAddress");
+const reportDetailProblem = document.getElementById("reportDetailProblem");
+const reportDetailTime = document.getElementById("reportDetailTime");
+const reportDetailComment = document.getElementById("reportDetailComment");
+const reportDetailImage = document.getElementById("reportDetailImage");
 const supabaseClient = window.supabaseClient;
 
 initializePage();
@@ -42,6 +50,12 @@ async function initializePage() {
   clearUploadedBtn.addEventListener("click", clearUploadedRoutes);
   refreshReportsBtn.addEventListener("click", () => {
     renderReports();
+  });
+  closeReportDetailBtn.addEventListener("click", closeReportDetails);
+  reportDetailModal.addEventListener("click", (event) => {
+    if (event.target === reportDetailModal) {
+      closeReportDetails();
+    }
   });
 
   renderStats();
@@ -525,29 +539,64 @@ async function renderReports() {
 
     reports.forEach((report) => {
       const item = document.createElement("li");
-      item.className = "report-item";
+      item.className = "report-item report-item-clickable";
+      item.tabIndex = 0;
 
       const date = new Date(report.reported_at || Date.now());
       const timestamp = date.toLocaleString("da-DK");
       const text = document.createElement("div");
       text.className = "report-text";
-      text.textContent =
-        "Rute " + report.route_no +
-        " | " + (report.address || "Ukendt adresse") +
-        " (" + (report.city || "Ukendt by") + ")" +
-        " | Problem: " + (report.problem_type || "Ukendt") +
-        (report.comment ? " | Kommentar: " + report.comment : "") +
-        " | Tid: " + timestamp;
+      const routeLine = document.createElement("div");
+      routeLine.className = "report-route-line";
+      routeLine.textContent = "Rute: " + report.route_no;
+      text.appendChild(routeLine);
+
+      const addressLine = document.createElement("div");
+      addressLine.className = "report-address-line";
+      addressLine.textContent =
+        "Adresse: " + (report.address || "Ukendt adresse") +
+        ", " + (report.city || "Ukendt by");
+      text.appendChild(addressLine);
+
+      const metaLine = document.createElement("div");
+      metaLine.className = "report-meta-line";
+      const problemLabel = document.createElement("span");
+      problemLabel.className = "report-problem-badge";
+      problemLabel.textContent = report.problem_type || "Ukendt";
+      metaLine.appendChild(problemLabel);
+
+      const timeText = document.createElement("span");
+      timeText.className = "report-time-text";
+      timeText.textContent = "Tid: " + timestamp;
+      metaLine.appendChild(timeText);
+      text.appendChild(metaLine);
+
+      if (report.comment) {
+        const commentLine = document.createElement("div");
+        commentLine.className = "report-comment";
+        commentLine.textContent = "Kommentar: " + report.comment;
+        text.appendChild(commentLine);
+      }
 
       item.appendChild(text);
+      item.addEventListener("click", () => {
+        openReportDetails(report, timestamp);
+      });
+      item.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          openReportDetails(report, timestamp);
+        }
+      });
 
       if (report.image_data) {
         const viewImageBtn = document.createElement("button");
         viewImageBtn.type = "button";
         viewImageBtn.className = "secondary-btn report-image-btn";
         viewImageBtn.textContent = "Vis billede";
-        viewImageBtn.addEventListener("click", () => {
-          openReportImage(report.image_data);
+        viewImageBtn.addEventListener("click", (event) => {
+          event.stopPropagation();
+          openReportDetails(report, timestamp);
         });
         item.appendChild(viewImageBtn);
       }
@@ -558,6 +607,38 @@ async function renderReports() {
     console.error(error);
     reportsList.innerHTML = "<li class=\"report-item\">Kunne ikke hente indrapporteringer.</li>";
   }
+}
+
+function openReportDetails(report, timestamp) {
+  reportDetailRoute.textContent = "Rute: " + (report.route_no ?? "Ukendt");
+  reportDetailAddress.textContent =
+    "Adresse: " + (report.address || "Ukendt adresse") +
+    ", " + (report.city || "Ukendt by");
+  reportDetailProblem.textContent = "Problemtype: " + (report.problem_type || "Ukendt");
+  reportDetailTime.textContent = "Tid: " + (timestamp || new Date(report.reported_at || Date.now()).toLocaleString("da-DK"));
+  if (report.comment) {
+    reportDetailComment.textContent = "Kommentar: " + report.comment;
+    reportDetailComment.classList.remove("hidden");
+  } else {
+    reportDetailComment.textContent = "";
+    reportDetailComment.classList.add("hidden");
+  }
+
+  if (report.image_data) {
+    reportDetailImage.src = report.image_data;
+    reportDetailImage.classList.remove("hidden");
+  } else {
+    reportDetailImage.src = "";
+    reportDetailImage.classList.add("hidden");
+  }
+
+  reportDetailModal.classList.remove("hidden");
+  reportDetailModal.setAttribute("aria-hidden", "false");
+}
+
+function closeReportDetails() {
+  reportDetailModal.classList.add("hidden");
+  reportDetailModal.setAttribute("aria-hidden", "true");
 }
 
 async function loadReports() {

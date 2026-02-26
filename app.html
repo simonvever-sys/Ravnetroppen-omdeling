@@ -25,13 +25,21 @@
   <div id="popup" class="popup hidden" aria-hidden="true">
     <div class="popup-content" role="dialog" aria-modal="true">
       <div id="menuView">
+        <div class="popup-menu-header">
+          <h3 id="popupAddressTitle">Valgt adresse</h3>
+          <p id="popupAddressSummary" class="popup-address-summary"></p>
+        </div>
         <button id="mapsBtn" type="button">📍 Vis adresse</button>
         <button id="reportBtn" type="button">🚨 Rapportér adresse</button>
-        <button id="closePopup" class="secondary-btn" type="button">Luk</button>
+        <button id="closePopup" class="secondary-btn" type="button">Tilbage</button>
       </div>
 
       <div id="reportView" class="hidden">
-        <h3>Rapportér problem</h3>
+        <div class="report-page-header">
+          <button id="backBtn" class="secondary-btn report-back-btn" type="button">Tilbage</button>
+          <h3>Rapportér problem</h3>
+          <span class="report-header-spacer" aria-hidden="true"></span>
+        </div>
 
         <label for="problemType">Problemtype</label>
         <select id="problemType">
@@ -55,7 +63,6 @@
         <input type="file" id="reportCamera" accept="image/*" capture="environment" class="report-camera-input">
 
         <button id="sendReport" type="button">Send rapport</button>
-        <button id="backBtn" class="secondary-btn" type="button">Tilbage</button>
       </div>
     </div>
   </div>
