@@ -643,12 +643,6 @@ body.dark-mode .address-item.is-problem {
   color: var(--muted);
 }
 
-.report-camera-trigger {
-  display: block;
-  text-align: center;
-  cursor: pointer;
-}
-
 .report-camera-input {
   position: absolute;
   width: 1px;

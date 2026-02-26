@@ -24,6 +24,7 @@ const problemTypeInput = document.getElementById("problemType");
 const commentInput = document.getElementById("comment");
 const reportImageInput = document.getElementById("reportImage");
 const reportCameraInput = document.getElementById("reportCamera");
+const takePhotoBtn = document.getElementById("takePhotoBtn");
 const reportImageStatus = document.getElementById("reportImageStatus");
 
 const storageKey = "status_rute_" + routeNumber;
@@ -49,6 +50,7 @@ async function initializePage() {
   document.getElementById("reportBtn").addEventListener("click", showReportForm);
   document.getElementById("backBtn").addEventListener("click", showMenu);
   document.getElementById("sendReport").addEventListener("click", sendReport);
+  takePhotoBtn.addEventListener("click", openCameraPicker);
   reportCameraInput.addEventListener("change", () => {
     if (reportCameraInput.files && reportCameraInput.files[0]) {
       reportImageInput.value = "";
@@ -291,6 +293,14 @@ function updateReportImageStatus() {
     ? "kamera"
     : "galleri";
   reportImageStatus.textContent = "Billede valgt fra " + source + ": " + file.name;
+}
+
+function openCameraPicker() {
+  if (typeof reportCameraInput.showPicker === "function") {
+    reportCameraInput.showPicker();
+    return;
+  }
+  reportCameraInput.click();
 }
 
 function openMaps() {
