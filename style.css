@@ -343,6 +343,42 @@ body.dark-mode .topbar {
   padding-bottom: calc(16px + env(safe-area-inset-bottom));
 }
 
+@media (min-width: 900px) {
+  body.login-page {
+    display: grid;
+    place-items: center;
+    min-height: 100vh;
+    padding: 24px;
+  }
+
+  .login-page .container {
+    width: min(100%, 540px);
+    margin: 0;
+    padding: 28px;
+  }
+
+  .login-page .login-card {
+    box-shadow: 0 16px 42px rgba(0, 0, 0, 0.14);
+  }
+
+  .login-page .login-card::before {
+    background-size: min(72vw, 760px);
+  }
+
+  .route-main {
+    max-width: 920px;
+  }
+
+  .admin-main {
+    max-width: 980px;
+    margin: 0 auto;
+  }
+
+  .admin-card {
+    max-width: 900px;
+  }
+}
+
 .route-progress {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -583,6 +619,28 @@ body.dark-mode .address-item.is-problem {
   margin-top: 0;
   padding: 8px 10px;
   font-size: 13px;
+}
+
+.report-or {
+  margin: 8px 0 6px;
+  text-align: center;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.report-upload-label {
+  margin-top: 4px;
+  margin-bottom: 4px;
+  font-weight: 600;
+}
+
+.report-upload-help {
+  margin: 4px 0 10px;
+  font-size: 12px;
+  color: var(--muted);
 }
 
 .theme-toggle {

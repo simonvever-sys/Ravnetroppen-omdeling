@@ -36,6 +36,8 @@
         <label for="problemType">Problemtype</label>
         <select id="problemType">
           <option value="Ingen postkasse">Ingen postkasse</option>
+          <option value="Ingen nummer på postkasse">Ingen nummer på postkasse</option>
+          <option value="Postkasse fuld">Postkasse fuld</option>
           <option value="Forkert adresse">Forkert adresse</option>
           <option value="Adgang blokeret">Adgang blokeret</option>
           <option value="Andet">Andet</option>
@@ -44,8 +46,12 @@
         <label for="comment">Kommentar (valgfri)</label>
         <input type="text" id="comment" placeholder="Skriv kort...">
 
-        <label for="reportImage">Billede (valgfri, maks 10 MB)</label>
+        <button id="takePhotoBtn" class="secondary-btn" type="button">Tag billede med kamera</button>
+        <p class="report-or">eller</p>
+        <label for="reportImage" class="report-upload-label">Vedhæft billede fra galleri</label>
         <input type="file" id="reportImage" accept="image/*">
+        <p class="report-upload-help">Valgfri. Maks 10 MB.</p>
+        <input type="file" id="reportCamera" accept="image/*" capture="environment" class="hidden">
 
         <button id="sendReport" type="button">Send rapport</button>
         <button id="backBtn" class="secondary-btn" type="button">Tilbage</button>

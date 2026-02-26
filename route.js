@@ -23,6 +23,8 @@ const reportView = document.getElementById("reportView");
 const problemTypeInput = document.getElementById("problemType");
 const commentInput = document.getElementById("comment");
 const reportImageInput = document.getElementById("reportImage");
+const reportCameraInput = document.getElementById("reportCamera");
+const takePhotoBtn = document.getElementById("takePhotoBtn");
 
 const storageKey = "status_rute_" + routeNumber;
 const supabaseClient = window.supabaseClient;
@@ -47,6 +49,9 @@ async function initializePage() {
   document.getElementById("reportBtn").addEventListener("click", showReportForm);
   document.getElementById("backBtn").addEventListener("click", showMenu);
   document.getElementById("sendReport").addEventListener("click", sendReport);
+  takePhotoBtn.addEventListener("click", () => {
+    reportCameraInput.click();
+  });
 
   loadRoute();
 }
@@ -248,6 +253,7 @@ function closePopup() {
   commentInput.value = "";
   problemTypeInput.selectedIndex = 0;
   reportImageInput.value = "";
+  reportCameraInput.value = "";
 }
 
 function showMenu() {
@@ -356,7 +362,9 @@ async function sendReport() {
 }
 
 async function readReportImageData() {
-  const file = reportImageInput.files && reportImageInput.files[0];
+  const file =
+    (reportCameraInput.files && reportCameraInput.files[0]) ||
+    (reportImageInput.files && reportImageInput.files[0]);
   if (!file) {
     return "";
   }
