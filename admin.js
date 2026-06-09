@@ -197,18 +197,22 @@ async function renderStats() {
 
 async function loadRouteData(routeNo) {
   if (supabaseClient) {
-    const { data, error } = await supabaseClient
-      .from("route_addresses")
-      .select("address_index,address,city")
-      .eq("route_no", routeNo)
-      .order("address_index", { ascending: true });
+    try {
+      const { data, error } = await supabaseClient
+        .from("route_addresses")
+        .select("address_index,address,city")
+        .eq("route_no", routeNo)
+        .order("address_index", { ascending: true });
 
-    if (error) {
-      throw error;
-    }
+      if (error) {
+        console.error("Supabase query fejl for rute " + routeNo, error);
+      }
 
-    if (data && data.length > 0) {
-      return data.map((row) => ({ address: row.address, city: row.city }));
+      if (data && data.length > 0) {
+        return data.map((row) => ({ address: row.address, city: row.city }));
+      }
+    } catch (supabaseError) {
+      console.error("Supabase forbindelse fejl", supabaseError);
     }
   }
 
@@ -217,41 +221,55 @@ async function loadRouteData(routeNo) {
     return JSON.parse(uploadedData);
   }
 
-  const response = await fetch("data/rute" + routeNo + ".json");
-  if (!response.ok) {
-    throw new Error("Mangler rutefil");
-  }
+  try {
+    const response = await fetch("data/rute" + routeNo + ".json");
+    if (!response.ok) {
+      return [];
+    }
 
-  const parsed = await response.json();
-  if (!Array.isArray(parsed)) {
-    throw new Error("Ugyldig rutefil");
-  }
+    const parsed = await response.json();
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
 
-  return parsed;
+    return parsed;
+  } catch (fetchError) {
+    console.warn("Rute " + routeNo + " ikke fundet lokalt eller i Supabase");
+    return [];
+  }
 }
 
 async function loadRouteStatus(routeNo) {
   if (supabaseClient) {
-    const { data, error } = await supabaseClient
-      .from("route_status")
-      .select("address_index,delivered,problem")
-      .eq("route_no", routeNo);
+    try {
+      const { data, error } = await supabaseClient
+        .from("route_status")
+        .select("address_index,delivered,problem")
+        .eq("route_no", routeNo);
 
-    if (error) {
-      throw error;
+      if (error) {
+        console.error("Status query fejl for rute " + routeNo, error);
+      }
+
+      const mapped = {};
+      (data || []).forEach((row) => {
+        mapped[row.address_index] = {
+          delivered: row.delivered,
+          problem: row.problem
+        };
+      });
+      return mapped;
+    } catch (supabaseError) {
+      console.error("Supabase forbindelse fejl", supabaseError);
     }
-
-    const mapped = {};
-    (data || []).forEach((row) => {
-      mapped[row.address_index] = {
-        delivered: row.delivered,
-        problem: row.problem
-      };
-    });
-    return mapped;
   }
 
-  return JSON.parse(localStorage.getItem(ROUTE_STATUS_PREFIX + routeNo) || "{}");
+  try {
+    return JSON.parse(localStorage.getItem(ROUTE_STATUS_PREFIX + routeNo) || "{}");
+  } catch (parseError) {
+    console.warn("Kunne ikke parse status for rute " + routeNo);
+    return {};
+  }
 }
 
 async function uploadRoutes() {
@@ -275,13 +293,19 @@ async function uploadRoutes() {
         );
       }
     } catch (error) {
+      console.error("Upload fejl for " + file.name, error);
       results.push(file.name + ": " + (error.message || "Ugyldig filformat/indhold"));
     }
   }
 
   uploadMsg.textContent = results.join(" | ");
   routeUploadInput.value = "";
-  await renderStats();
+  
+  try {
+    await renderStats();
+  } catch (statError) {
+    console.error("Stats fejl efter upload", statError);
+  }
 }
 
 async function parseUploadsFromFile(file, forcedRouteNo) {
@@ -393,8 +417,7 @@ function normalizeRowKeys(row) {
     const normalizedKey = String(key)
       .trim()
       .toLowerCase()
-      .replace(/\s+/g, "")
-      .replace(/_/g, "");
+      .replace(/[\s_-]+/g, "");
     output[normalizedKey] = row[key];
   });
   return output;
@@ -446,7 +469,7 @@ function findFirstKey(keys, candidates) {
 }
 
 function getRouteFromFilename(fileName) {
-  const match = fileName.toLowerCase().match(/^rute(\d+)\.(json|xlsx|xls|csv)$/);
+  const match = fileName.toLowerCase().match(/^(?:rute|route)[_\- ]?(\d+)\.(json|xlsx|xls|csv)$/);
   if (!match) {
     return null;
   }
@@ -465,33 +488,40 @@ async function persistRouteData(routeNo, entries) {
   }
 
   if (supabaseClient) {
-    const { error: deleteError } = await supabaseClient
-      .from("route_addresses")
-      .delete()
-      .eq("route_no", routeNo);
-
-    if (deleteError) {
-      throw deleteError;
-    }
-
-    const payload = entries.map((entry, index) => ({
-      route_no: routeNo,
-      address_index: index,
-      address: entry.address,
-      city: entry.city
-    }));
-
-    if (payload.length > 0) {
-      const { error: insertError } = await supabaseClient
+    try {
+      const { error: deleteError } = await supabaseClient
         .from("route_addresses")
-        .insert(payload);
+        .delete()
+        .eq("route_no", routeNo);
 
-      if (insertError) {
-        throw insertError;
+      if (deleteError) {
+        console.error("Delete fejl", deleteError);
+        throw deleteError;
       }
-    }
 
-    return;
+      const payload = entries.map((entry, index) => ({
+        route_no: routeNo,
+        address_index: index,
+        address: entry.address,
+        city: entry.city
+      }));
+
+      if (payload.length > 0) {
+        const { error: insertError } = await supabaseClient
+          .from("route_addresses")
+          .insert(payload);
+
+        if (insertError) {
+          console.error("Insert fejl", insertError);
+          throw insertError;
+        }
+      }
+
+      return;
+    } catch (supabaseError) {
+      console.error("Supabase fejl ved gemning", supabaseError);
+      throw new Error("Supabase fejl: " + (supabaseError.message || "Ukendt fejl"));
+    }
   }
 
   localStorage.setItem(ROUTE_DATA_PREFIX + routeNo, JSON.stringify(entries));

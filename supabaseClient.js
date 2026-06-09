@@ -1,5 +1,5 @@
-const SUPABASE_URL = "https://znjfturgehkrdmrpyznt.supabase.co";
-const SUPABASE_ANON_KEY = "sb_publishable_XDkbhRsHq2fHCencH44MRQ_qxUhl1To";
+const SUPABASE_URL = "https://yatbedjjbiyfjlhgfmig.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_4BkwVjj8w2pd-rGlfjTRGA_oS3-bref";
 
 (function initSupabase() {
   const hasLib = typeof window.supabase !== "undefined";

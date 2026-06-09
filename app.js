@@ -30,6 +30,7 @@ const usernameInput = document.getElementById("username");
 const passwordInput = document.getElementById("password");
 const rememberInput = document.getElementById("rememberMe");
 const errorMsg = document.getElementById("errorMsg");
+const createProfileBtn = document.getElementById("createProfileBtn");
 
 window.addEventListener("load", () => {
   const savedUser = localStorage.getItem(SAVED_USER_KEY);
@@ -65,6 +66,12 @@ loginForm.addEventListener("submit", (event) => {
 
   goToDestination(username);
 });
+
+if (createProfileBtn) {
+  createProfileBtn.addEventListener("click", () => {
+    alert("Profiloprettelse sker via administrator. Kontakt admin for at blive oprettet.");
+  });
+}
 
 function goToDestination(username) {
   if (username === "admin") {
