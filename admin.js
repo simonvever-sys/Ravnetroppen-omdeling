@@ -427,9 +427,21 @@ function normalizeEntries(entries) {
   return entries
     .map((entry) => ({
       address: String(entry?.address || "").trim(),
-      city: String(entry?.city || "").trim()
+      city: String(entry?.city || "").trim(),
+      latitude: entry?.latitude || entry?.lat || null,
+      longitude: entry?.longitude || entry?.lng || null
+    }))
+    .map((entry) => ({
+      ...entry,
+      latitude: parseCoordinate(entry.latitude),
+      longitude: parseCoordinate(entry.longitude)
     }))
     .filter((entry) => entry.address.length > 0);
+}
+
+function parseCoordinate(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
 }
 
 function extractEntriesFromRows(rows) {

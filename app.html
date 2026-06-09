@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Min rute</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css">
 </head>
 <body>
   <header class="topbar route-topbar">
@@ -18,6 +19,10 @@
       <div class="progress-track" aria-hidden="true">
         <div id="progressFill" class="progress-fill"></div>
       </div>
+    </section>
+    <section id="routeMapSection" class="route-map-section hidden" aria-label="Rutekort">
+      <div id="routeMap" class="route-map" aria-hidden="true"></div>
+      <p id="mapHint" class="map-hint">Tryk en adresse for at se den på kortet.</p>
     </section>
     <ul id="addressList" aria-live="polite"></ul>
   </main>
@@ -70,6 +75,7 @@
   <button class="theme-toggle" type="button" aria-label="Skift tema"></button>
   <script src="theme.js?v=20260225"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
   <script src="supabaseClient.js?v=20260225"></script>
   <script src="route.js?v=20260225"></script>
 </body>

@@ -32,6 +32,9 @@ const storageKey = "status_rute_" + routeNumber;
 const supabaseClient = window.supabaseClient;
 let addresses = [];
 let selectedAddressIndex = null;
+let map = null;
+let mapMarker = null;
+let routeLayer = null;
 
 routeTitle.textContent = "Rute " + routeNumber;
 
@@ -52,6 +55,7 @@ async function initializePage() {
   document.getElementById("backBtn").addEventListener("click", showMenu);
   document.getElementById("sendReport").addEventListener("click", sendReport);
   takePhotoBtn.addEventListener("click", openCameraPicker);
+  setupMap();
   reportCameraInput.addEventListener("change", () => {
     if (reportCameraInput.files && reportCameraInput.files[0]) {
       reportImageInput.value = "";
@@ -84,6 +88,8 @@ async function loadRoute() {
     addresses = data.map((item, index) => ({
       address: String(item.address || ""),
       city: String(item.city || ""),
+      latitude: parseCoordinate(item.latitude || item.lat || item.latitudedk || item.latitud),
+      longitude: parseCoordinate(item.longitude || item.lng || item.lon || item.longetude),
       delivered: Boolean(status[index]?.delivered),
       problem: Boolean(status[index]?.problem)
     }));
@@ -207,6 +213,7 @@ function renderList() {
   });
 
   renderProgress();
+  refreshMapView();
 }
 
 function renderProgress() {
@@ -219,6 +226,103 @@ function renderProgress() {
   progressText.textContent =
     "Afkrydset: " + delivered + " / " + total + " (Problemer: " + problem + ")";
   progressFill.style.width = percent + "%";
+}
+
+function setupMap() {
+  const mapElement = document.getElementById("routeMap");
+  if (!mapElement || typeof L === "undefined") {
+    return;
+  }
+
+  map = L.map(mapElement, {
+    center: [56.0, 10.0],
+    zoom: 7,
+    zoomControl: true,
+    attributionControl: false
+  });
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom: 19,
+    minZoom: 3,
+    attribution: "© OpenStreetMap"
+  }).addTo(map);
+
+  mapMarker = L.marker([0, 0]);
+  routeLayer = L.layerGroup().addTo(map);
+}
+
+function refreshMapView() {
+  const mapSection = document.getElementById("routeMapSection");
+  const mapHint = document.getElementById("mapHint");
+  if (!map || !mapSection || !mapHint) {
+    return;
+  }
+
+  const points = addresses
+    .map((item) => ({ lat: item.latitude, lng: item.longitude }))
+    .filter((point) => typeof point.lat === "number" && typeof point.lng === "number");
+
+  if (!points.length) {
+    mapSection.classList.add("hidden");
+    mapHint.textContent =
+      "Ingen koordinater fundet. Tilføj latitude/longitude i Excel for at få kortvisning.";
+    return;
+  }
+
+  mapSection.classList.remove("hidden");
+  mapHint.textContent = "Tryk en adresse for at se den på kortet.";
+  routeLayer.clearLayers();
+
+  const markers = points.map((point) => {
+    return L.circleMarker([point.lat, point.lng], {
+      radius: 6,
+      color: "#1b9e43",
+      fillColor: "#39c865",
+      fillOpacity: 0.8,
+      weight: 2
+    }).addTo(routeLayer);
+  });
+
+  if (markers.length === 0) {
+    return;
+  }
+
+  const bounds = L.latLngBounds(points.map((point) => [point.lat, point.lng]));
+  map.fitBounds(bounds, { padding: [24, 24] });
+  if (selectedAddressIndex !== null && hasCoordinates(addresses[selectedAddressIndex])) {
+    updateAddressMarker(selectedAddressIndex);
+  }
+}
+
+function updateAddressMarker(index) {
+  if (!map || !mapMarker || index === null) {
+    return;
+  }
+
+  const item = addresses[index];
+  if (!hasCoordinates(item)) {
+    return;
+  }
+
+  const latLng = [item.latitude, item.longitude];
+  mapMarker.setLatLng(latLng);
+  mapMarker.addTo(map);
+  map.setView(latLng, 15);
+}
+
+function hasCoordinates(item) {
+  return (
+    item &&
+    typeof item.latitude === "number" &&
+    typeof item.longitude === "number" &&
+    !Number.isNaN(item.latitude) &&
+    !Number.isNaN(item.longitude)
+  );
+}
+
+function parseCoordinate(value) {
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
 }
 
 async function saveStatus() {
@@ -262,6 +366,10 @@ function openPopup() {
   popup.classList.add("menu-mode");
   popup.classList.remove("hidden");
   popup.setAttribute("aria-hidden", "false");
+
+  if (hasCoordinates(item)) {
+    updateAddressMarker(selectedAddressIndex);
+  }
 }
 
 function closePopup() {
@@ -323,11 +431,16 @@ function openMaps() {
   const item = addresses[selectedAddressIndex];
   const query = encodeURIComponent(item.address + " " + item.city);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+  const isAndroid = /Android/.test(navigator.userAgent);
   const url = isIOS
     ? "https://maps.apple.com/?q=" + query
     : "https://www.google.com/maps/search/?api=1&query=" + query;
 
-  window.open(url, "_blank");
+  if (isIOS || isAndroid) {
+    window.location.href = url;
+  } else {
+    window.open(url, "_blank");
+  }
 }
 
 async function sendReport() {
