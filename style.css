@@ -387,22 +387,10 @@ body.dark-mode .topbar {
   margin-bottom: 10px;
 }
 
-.route-map-section {
-  margin-bottom: 14px;
-}
-
-.route-map {
-  width: 100%;
-  min-height: 240px;
-  border-radius: 16px;
-  overflow: hidden;
-  background: #f2f2f2;
-}
-
-.map-hint {
-  margin: 10px 0 0;
-  color: var(--muted);
-  text-align: center;
+#progressText {
+  margin: 0 0 8px;
+  font-weight: 700;
+  color: var(--text);
   font-size: 14px;
 }
 

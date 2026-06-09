@@ -427,21 +427,9 @@ function normalizeEntries(entries) {
   return entries
     .map((entry) => ({
       address: String(entry?.address || "").trim(),
-      city: String(entry?.city || "").trim(),
-      latitude: entry?.latitude || entry?.lat || null,
-      longitude: entry?.longitude || entry?.lng || null
-    }))
-    .map((entry) => ({
-      ...entry,
-      latitude: parseCoordinate(entry.latitude),
-      longitude: parseCoordinate(entry.longitude)
+      city: String(entry?.city || "").trim()
     }))
     .filter((entry) => entry.address.length > 0);
-}
-
-function parseCoordinate(value) {
-  const number = Number(value);
-  return Number.isFinite(number) ? number : null;
 }
 
 function extractEntriesFromRows(rows) {
@@ -511,50 +499,21 @@ async function persistRouteData(routeNo, entries) {
         throw deleteError;
       }
 
-      const payload = entries.map((entry, index) => {
-        const row = {
-          route_no: routeNo,
-          address_index: index,
-          address: entry.address,
-          city: entry.city
-        };
-        if (typeof entry.latitude === "number") {
-          row.latitude = entry.latitude;
-        }
-        if (typeof entry.longitude === "number") {
-          row.longitude = entry.longitude;
-        }
-        return row;
-      });
+      const payload = entries.map((entry, index) => ({
+        route_no: routeNo,
+        address_index: index,
+        address: entry.address,
+        city: entry.city
+      }));
 
       if (payload.length > 0) {
-        let insertError = null;
-        let response;
-
-        try {
-          response = await supabaseClient.from("route_addresses").insert(payload);
-          insertError = response.error;
-        } catch (insertException) {
-          console.warn("Insert med koordinater fejlede", insertException);
-          insertError = insertException;
-        }
+        const { error: insertError } = await supabaseClient
+          .from("route_addresses")
+          .insert(payload);
 
         if (insertError) {
-          const fallbackPayload = payload.map(({ route_no, address_index, address, city }) => ({
-            route_no,
-            address_index,
-            address,
-            city
-          }));
-
-          const fallbackResponse = await supabaseClient
-            .from("route_addresses")
-            .insert(fallbackPayload);
-
-          if (fallbackResponse.error) {
-            console.error("Fallback insert fejl", fallbackResponse.error);
-            throw fallbackResponse.error;
-          }
+          console.error("Insert fejl", insertError);
+          throw insertError;
         }
       }
 
