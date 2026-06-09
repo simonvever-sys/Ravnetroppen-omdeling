@@ -103,18 +103,44 @@ async function loadRoute() {
 
 async function getRouteData(routeNo) {
   if (supabaseClient) {
-    const { data, error } = await supabaseClient
-      .from("route_addresses")
-      .select("address_index,address,city")
-      .eq("route_no", routeNo)
-      .order("address_index", { ascending: true });
+    let data;
+    let error;
+
+    try {
+      const response = await supabaseClient
+        .from("route_addresses")
+        .select("address_index,address,city,latitude,longitude")
+        .eq("route_no", routeNo)
+        .order("address_index", { ascending: true });
+
+      data = response.data;
+      error = response.error;
+    } catch (queryError) {
+      console.warn("Supabase query med koordinater fejlede, prøver uden koordinater", queryError);
+    }
+
+    if (error) {
+      const fallback = await supabaseClient
+        .from("route_addresses")
+        .select("address_index,address,city")
+        .eq("route_no", routeNo)
+        .order("address_index", { ascending: true });
+
+      data = fallback.data;
+      error = fallback.error;
+    }
 
     if (error) {
       throw error;
     }
 
     if (data && data.length > 0) {
-      return data.map((row) => ({ address: row.address, city: row.city }));
+      return data.map((row) => ({
+        address: row.address,
+        city: row.city,
+        latitude: row.latitude,
+        longitude: row.longitude
+      }));
     }
   }
 
@@ -429,18 +455,21 @@ function openMaps() {
   }
 
   const item = addresses[selectedAddressIndex];
+  const mapSection = document.getElementById("routeMapSection");
+  if (hasCoordinates(item) && mapSection) {
+    mapSection.classList.remove("hidden");
+    updateAddressMarker(selectedAddressIndex);
+    mapSection.scrollIntoView({ behavior: "smooth", block: "start" });
+    return;
+  }
+
   const query = encodeURIComponent(item.address + " " + item.city);
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-  const isAndroid = /Android/.test(navigator.userAgent);
   const url = isIOS
     ? "https://maps.apple.com/?q=" + query
     : "https://www.google.com/maps/search/?api=1&query=" + query;
 
-  if (isIOS || isAndroid) {
-    window.location.href = url;
-  } else {
-    window.open(url, "_blank");
-  }
+  window.open(url, "_blank");
 }
 
 async function sendReport() {

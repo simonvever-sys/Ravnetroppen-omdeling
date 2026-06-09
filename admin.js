@@ -511,21 +511,50 @@ async function persistRouteData(routeNo, entries) {
         throw deleteError;
       }
 
-      const payload = entries.map((entry, index) => ({
-        route_no: routeNo,
-        address_index: index,
-        address: entry.address,
-        city: entry.city
-      }));
+      const payload = entries.map((entry, index) => {
+        const row = {
+          route_no: routeNo,
+          address_index: index,
+          address: entry.address,
+          city: entry.city
+        };
+        if (typeof entry.latitude === "number") {
+          row.latitude = entry.latitude;
+        }
+        if (typeof entry.longitude === "number") {
+          row.longitude = entry.longitude;
+        }
+        return row;
+      });
 
       if (payload.length > 0) {
-        const { error: insertError } = await supabaseClient
-          .from("route_addresses")
-          .insert(payload);
+        let insertError = null;
+        let response;
+
+        try {
+          response = await supabaseClient.from("route_addresses").insert(payload);
+          insertError = response.error;
+        } catch (insertException) {
+          console.warn("Insert med koordinater fejlede", insertException);
+          insertError = insertException;
+        }
 
         if (insertError) {
-          console.error("Insert fejl", insertError);
-          throw insertError;
+          const fallbackPayload = payload.map(({ route_no, address_index, address, city }) => ({
+            route_no,
+            address_index,
+            address,
+            city
+          }));
+
+          const fallbackResponse = await supabaseClient
+            .from("route_addresses")
+            .insert(fallbackPayload);
+
+          if (fallbackResponse.error) {
+            console.error("Fallback insert fejl", fallbackResponse.error);
+            throw fallbackResponse.error;
+          }
         }
       }
 
